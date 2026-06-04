@@ -35,6 +35,15 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 
 ## Dev Log
 
+### 2026-06-04
+
+**Bug Fixes (dropdown positioning)**
+- Fixed the dropdown glitching (phantom scroll chevron, menu creeping lower on every open): we were calling ResetMenu while the menu was displaying — on every `TrayOpenedCh` — and NSMenu can't handle being torn down mid-display. Opening the menu now refreshes row titles in place (`SetTitle` is safe on an open menu); a full rebuild only happens after add/remove/reset or when a hand-edit changed the item set.
+- The menu still opened behind the menu bar and jumped below it on scroll — traced into upstream `fyne.io/systray`: since their Jan 2026 commit 969e8e6, `show_menu` pops the menu at `(0, 0)` in the status button's *flipped* coordinates, i.e. pinned to the top of the menu bar. Still broken on their master.
+- Considered switching to the original getlantern/systray (native `statusItem.setMenu`, no positioning bug) but rejected it: effectively unmaintained, and it lacks `ResetMenu`, item removal, and `TrayOpenedCh` — the three APIs this app's rebuild-from-file design depends on.
+- Forked to mattsafaii/systray (branch `fix-macos-menu-position`, one commit) and pinned via a go.mod replace. First attempt anchored to the button's bottom edge, but status buttons are inset capsules on newer macOS so the menu still overlapped the bar; final fix anchors to the bottom of the button's *window* (the menu bar itself) plus the native ~5pt gap.
+- Opened the fix upstream as fyne-io/systray PR #119 — when it merges, drop the replace (`go mod edit -dropreplace fyne.io/systray`).
+
 ### 2026-06-03
 
 **Packaging**
