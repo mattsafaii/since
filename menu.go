@@ -151,6 +151,14 @@ func addItem() {
 		log.Printf("loading items: %v", err)
 		return
 	}
+	// Names are how reset and remove find items, so duplicates would
+	// always hit the first match. Reject instead.
+	for _, it := range items {
+		if it.Name == name {
+			alertDuplicate(name)
+			return
+		}
+	}
 	items = append(items, Item{Name: name, LastDone: time.Now()})
 	if err := saveItems(items); err != nil {
 		log.Printf("saving items: %v", err)

@@ -18,6 +18,13 @@ func promptForName() (name string, ok bool) {
 	return name, name != ""
 }
 
+// alertDuplicate tells the user an item with this name already exists.
+func alertDuplicate(name string) {
+	exec.Command("osascript", "-e",
+		`display alert "“`+escapeAppleScript(name)+`” already exists" message "Item names must be unique." as warning`,
+	).Run()
+}
+
 // confirmRemove shows a native confirm dialog; true means delete it.
 func confirmRemove(name string) bool {
 	err := exec.Command("osascript", "-e",
