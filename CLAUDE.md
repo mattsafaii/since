@@ -33,6 +33,20 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 - No settings window, no Fyne/Wails windows
 - No sync, accounts, or network of any kind
 
+## Dev Log
+
+### 2026-06-03
+
+**Build (v1 complete)**
+- Built the whole v1 in one session: storage, time labels, menu, and dialogs, working through the 15-todo Basecamp build list from PRD to verified app.
+- Storage is a plain `loadItems`/`saveItems` pair over `~/.config/since/items.json`, created empty on first run, because the JSON file is the data contract for any future UI.
+- Time labels count calendar days (not 24-hour spans) so something done at 11pm reads "yesterday" the next morning; rounding is coarse on purpose — days under a week, weeks under a month, then months.
+- The dropdown rebuilds wholesale from the file on every open via systray's `TrayOpenedCh` — the fyne fork exposes exactly the hook the PRD's "rebuild on open" needed, so hand-edits to items.json show up with no polling and no restart.
+- Each rebuild closes a generation channel so stale menu-item click listeners exit instead of leaking goroutines across rebuilds.
+- Add/remove use `osascript` dialogs instead of a Go GUI framework to keep the binary dependency-light; AppleScript strings are escaped since item names are user input.
+- Click-to-reset and remove match items by name. Known limitation: duplicate names only ever hit the first match — surfaced during verification when the test file had "Alcohol" twice.
+- Verification caught a real win for the error path: a hand-edit typo (`-011:00` timezone) made parsing fail, and the menu degraded to a disabled "Couldn't read items.json" row instead of crashing.
+
 ## Basecamp
 
 - Account 6191443 (Safaii Studio), project **Since** id `47572591`
