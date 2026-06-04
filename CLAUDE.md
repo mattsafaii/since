@@ -37,6 +37,17 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 
 ### 2026-06-04
 
+**Hardening (post-v1 improvements)**
+- Did a small repo health pass and fixed the three real gaps it surfaced, skipping architecture changes on purpose — at ~350 lines, more structure would be cosplay.
+- `saveItems` now writes a temp file and renames it over items.json, because the old truncate-in-place write could corrupt the single source of truth if the app died mid-write.
+- "Add item…" rejects names that already exist (native warning alert): reset and remove match by name, so duplicates only ever operated on the first match — Matt hit this in practice with two "Alcohol" entries.
+- `make login` installs a LaunchAgent (`com.mattsafaii.since`) so the app survives reboots — a tracker that isn't running is silently lying, and until now it had to be launched by hand.
+
+**Housekeeping**
+- Scrubbed `.basecamp/config.json` out of git history (rebase + force push) and gitignored it — it carries account/project IDs and was committed by mistake; the file stays on disk untracked so the CLI keeps working.
+
+### 2026-06-04
+
 **Bug Fixes (dropdown positioning)**
 - Fixed the dropdown glitching (phantom scroll chevron, menu creeping lower on every open): we were calling ResetMenu while the menu was displaying — on every `TrayOpenedCh` — and NSMenu can't handle being torn down mid-display. Opening the menu now refreshes row titles in place (`SetTitle` is safe on an open menu); a full rebuild only happens after add/remove/reset or when a hand-edit changed the item set.
 - The menu still opened behind the menu bar and jumped below it on scroll — traced into upstream `fyne.io/systray`: since their Jan 2026 commit 969e8e6, `show_menu` pops the menu at `(0, 0)` in the status button's *flipped* coordinates, i.e. pinned to the top of the menu bar. Still broken on their master.
