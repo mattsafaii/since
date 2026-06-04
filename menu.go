@@ -197,6 +197,7 @@ func resetItem(name string) {
 	}
 	for i := range items {
 		if items[i].Name == name {
+			items[i].History = append(items[i].History, items[i].LastDone)
 			items[i].LastDone = time.Now()
 			break
 		}

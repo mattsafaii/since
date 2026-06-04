@@ -8,9 +8,12 @@ import (
 )
 
 // Item is one tracked thing: its name and when it was last done.
+// History holds prior lastDone values, oldest first — appended on every
+// reset so undo (and any future stats) have data to work with.
 type Item struct {
-	Name     string    `json:"name"`
-	LastDone time.Time `json:"lastDone"`
+	Name     string      `json:"name"`
+	LastDone time.Time   `json:"lastDone"`
+	History  []time.Time `json:"history,omitempty"`
 }
 
 // itemsPath returns ~/.config/since/items.json.
