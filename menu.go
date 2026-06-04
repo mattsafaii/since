@@ -71,6 +71,21 @@ func rebuildMenu() {
 		}
 	}()
 
+	if len(items) > 0 {
+		remove := systray.AddMenuItem("Remove", "")
+		for _, it := range items {
+			sub := remove.AddSubMenuItem(it.Name, "")
+			name := it.Name
+			go func() {
+				select {
+				case <-sub.ClickedCh:
+					removeItem(name)
+				case <-gen:
+				}
+			}()
+		}
+	}
+
 	quit := systray.AddMenuItem("Quit", "")
 	go func() {
 		select {
@@ -94,6 +109,28 @@ func addItem() {
 	}
 	items = append(items, Item{Name: name, LastDone: time.Now()})
 	if err := saveItems(items); err != nil {
+		log.Printf("saving items: %v", err)
+	}
+	rebuildMenu()
+}
+
+// removeItem confirms, then deletes the item and redraws.
+func removeItem(name string) {
+	if !confirmRemove(name) {
+		return
+	}
+	items, err := loadItems()
+	if err != nil {
+		log.Printf("loading items: %v", err)
+		return
+	}
+	kept := items[:0]
+	for _, it := range items {
+		if it.Name != name {
+			kept = append(kept, it)
+		}
+	}
+	if err := saveItems(kept); err != nil {
 		log.Printf("saving items: %v", err)
 	}
 	rebuildMenu()
