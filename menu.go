@@ -62,6 +62,15 @@ func rebuildMenu() {
 		systray.AddSeparator()
 	}
 
+	add := systray.AddMenuItem("Add item…", "")
+	go func() {
+		select {
+		case <-add.ClickedCh:
+			addItem()
+		case <-gen:
+		}
+	}()
+
 	quit := systray.AddMenuItem("Quit", "")
 	go func() {
 		select {
@@ -70,6 +79,24 @@ func rebuildMenu() {
 		case <-gen:
 		}
 	}()
+}
+
+// addItem prompts for a name and appends a new item with lastDone = now.
+func addItem() {
+	name, ok := promptForName()
+	if !ok {
+		return
+	}
+	items, err := loadItems()
+	if err != nil {
+		log.Printf("loading items: %v", err)
+		return
+	}
+	items = append(items, Item{Name: name, LastDone: time.Now()})
+	if err := saveItems(items); err != nil {
+		log.Printf("saving items: %v", err)
+	}
+	rebuildMenu()
 }
 
 // resetItem sets an item's lastDone to now, writes the file, and redraws.
