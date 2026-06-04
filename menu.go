@@ -48,7 +48,15 @@ func rebuildMenu() {
 
 	now := time.Now()
 	for _, it := range items {
-		systray.AddMenuItem(fmt.Sprintf("%s — %s", it.Name, sinceLabel(it.LastDone, now)), "")
+		row := systray.AddMenuItem(fmt.Sprintf("%s — %s", it.Name, sinceLabel(it.LastDone, now)), "Click to reset to today")
+		name := it.Name
+		go func() {
+			select {
+			case <-row.ClickedCh:
+				resetItem(name)
+			case <-gen:
+			}
+		}()
 	}
 	if len(items) > 0 {
 		systray.AddSeparator()
@@ -62,4 +70,23 @@ func rebuildMenu() {
 		case <-gen:
 		}
 	}()
+}
+
+// resetItem sets an item's lastDone to now, writes the file, and redraws.
+func resetItem(name string) {
+	items, err := loadItems()
+	if err != nil {
+		log.Printf("loading items: %v", err)
+		return
+	}
+	for i := range items {
+		if items[i].Name == name {
+			items[i].LastDone = time.Now()
+			break
+		}
+	}
+	if err := saveItems(items); err != nil {
+		log.Printf("saving items: %v", err)
+	}
+	rebuildMenu()
 }
