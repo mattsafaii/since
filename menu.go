@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	menuMu  sync.Mutex
-	menuGen chan struct{} // closed on each rebuild so stale click listeners exit
+	menuMu   sync.Mutex
+	menuGen  chan struct{}       // closed on each rebuild so stale click listeners exit
+	menuRows []*systray.MenuItem // current item rows, parallel to rowNames
+	rowNames []string            // item names the menu was last built from
 )
 
 func onReady() {
@@ -20,17 +22,55 @@ func onReady() {
 	rebuildMenu()
 	go func() {
 		for range systray.TrayOpenedCh {
-			rebuildMenu()
+			refreshMenu()
 		}
 	}()
 }
 
-// rebuildMenu redraws the whole dropdown from items.json, so hand-edits
-// show up every time the menu opens.
-func rebuildMenu() {
+// refreshMenu updates row labels in place when the menu opens. A full
+// ResetMenu while the menu is displaying breaks NSMenu's height math
+// (phantom scroll arrows, menu creeping downward), so we only rebuild
+// when the item set actually changed — e.g. a hand-edit to items.json —
+// and otherwise just SetTitle, which is safe on an open menu.
+func refreshMenu() {
 	menuMu.Lock()
 	defer menuMu.Unlock()
 
+	items, err := loadItems()
+	if err != nil {
+		log.Printf("loading items: %v", err)
+		rebuildMenuLocked()
+		return
+	}
+
+	same := len(items) == len(rowNames)
+	if same {
+		for i := range items {
+			if items[i].Name != rowNames[i] {
+				same = false
+				break
+			}
+		}
+	}
+	if !same {
+		rebuildMenuLocked()
+		return
+	}
+
+	now := time.Now()
+	for i, it := range items {
+		menuRows[i].SetTitle(fmt.Sprintf("%s — %s", it.Name, sinceLabel(it.LastDone, now)))
+	}
+}
+
+// rebuildMenu redraws the whole dropdown from items.json.
+func rebuildMenu() {
+	menuMu.Lock()
+	defer menuMu.Unlock()
+	rebuildMenuLocked()
+}
+
+func rebuildMenuLocked() {
 	if menuGen != nil {
 		close(menuGen)
 	}
@@ -38,6 +78,8 @@ func rebuildMenu() {
 	gen := menuGen
 
 	systray.ResetMenu()
+	menuRows = nil
+	rowNames = nil
 
 	items, err := loadItems()
 	if err != nil {
@@ -49,6 +91,8 @@ func rebuildMenu() {
 	now := time.Now()
 	for _, it := range items {
 		row := systray.AddMenuItem(fmt.Sprintf("%s — %s", it.Name, sinceLabel(it.LastDone, now)), "Click to reset to today")
+		menuRows = append(menuRows, row)
+		rowNames = append(rowNames, it.Name)
 		name := it.Name
 		go func() {
 			select {
