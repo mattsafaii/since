@@ -37,6 +37,15 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 
 ### 2026-06-03
 
+**Packaging**
+- Packaged Since as a real Since.app in /Applications because launching a bare binary from the repo was the only way to start it — now it's double-clickable from Finder like any other app.
+- App icon is generated, not designed: a small Swift script (`assets/make-icon.swift`) renders the same ⧗ glyph the menu bar uses onto a dark rounded rect, then `sips` + `iconutil` produce Since.icns. `make icon` regenerates it, so there's no binary-only design asset to lose.
+- Info.plist sets `LSUIElement` so the app is menu-bar-only — no Dock icon, no Cmd-Tab entry — matching the "everything lives in the dropdown" principle.
+- `make install` rebuilds and reinstalls to /Applications in one shot; `dist/` is gitignored, but the generated Since.icns is committed so builds don't require the Swift toolchain.
+- Tracked the work as a second Basecamp todolist ("App bundle", 5 todos) in the Since project, same build→verify rhythm as v1.
+
+### 2026-06-03
+
 **Build (v1 complete)**
 - Built the whole v1 in one session: storage, time labels, menu, and dialogs, working through the 15-todo Basecamp build list from PRD to verified app.
 - Storage is a plain `loadItems`/`saveItems` pair over `~/.config/since/items.json`, created empty on first run, because the JSON file is the data contract for any future UI.
