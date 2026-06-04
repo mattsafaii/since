@@ -117,6 +117,19 @@ func rebuildMenuLocked() {
 	}()
 
 	if len(items) > 0 {
+		rename := systray.AddMenuItem("Rename", "")
+		for _, it := range items {
+			sub := rename.AddSubMenuItem(it.Name, "")
+			name := it.Name
+			go func() {
+				select {
+				case <-sub.ClickedCh:
+					renameItem(name)
+				case <-gen:
+				}
+			}()
+		}
+
 		remove := systray.AddMenuItem("Remove", "")
 		for _, it := range items {
 			sub := remove.AddSubMenuItem(it.Name, "")
@@ -206,6 +219,40 @@ func addItem() {
 	if err := saveItems(items); err != nil {
 		log.Printf("saving items: %v", err)
 	}
+	rebuildMenu()
+}
+
+// renameItem prompts for a new name, keeping lastDone and history.
+func renameItem(oldName string) {
+	newName, ok := promptForRename(oldName)
+	if !ok {
+		return
+	}
+	items, err := loadItems()
+	if err != nil {
+		log.Printf("loading items: %v", err)
+		return
+	}
+	for _, it := range items {
+		if it.Name == newName {
+			alertDuplicate(newName)
+			return
+		}
+	}
+	for i := range items {
+		if items[i].Name == oldName {
+			items[i].Name = newName
+			break
+		}
+	}
+	if err := saveItems(items); err != nil {
+		log.Printf("saving items: %v", err)
+	}
+	menuMu.Lock()
+	if lastResetName == oldName {
+		lastResetName = newName
+	}
+	menuMu.Unlock()
 	rebuildMenu()
 }
 

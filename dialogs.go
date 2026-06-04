@@ -18,6 +18,19 @@ func promptForName() (name string, ok bool) {
 	return name, name != ""
 }
 
+// promptForRename shows a text-input dialog pre-filled with the current
+// name. ok is false when cancelled, empty, or unchanged.
+func promptForRename(current string) (name string, ok bool) {
+	out, err := exec.Command("osascript", "-e",
+		`text returned of (display dialog "Rename “`+escapeAppleScript(current)+`” to:" default answer "`+escapeAppleScript(current)+`" with title "Since" buttons {"Cancel", "Rename"} default button "Rename")`,
+	).Output()
+	if err != nil { // cancelled
+		return "", false
+	}
+	name = strings.TrimSpace(string(out))
+	return name, name != "" && name != current
+}
+
 // alertDuplicate tells the user an item with this name already exists.
 func alertDuplicate(name string) {
 	exec.Command("osascript", "-e",
