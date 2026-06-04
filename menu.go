@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	menuMu   sync.Mutex
-	menuGen  chan struct{}       // closed on each rebuild so stale click listeners exit
-	menuRows []*systray.MenuItem // current item rows, parallel to rowNames
-	rowNames []string            // item names the menu was last built from
+	menuMu        sync.Mutex
+	menuGen       chan struct{}       // closed on each rebuild so stale click listeners exit
+	menuRows      []*systray.MenuItem // current item rows, parallel to rowNames
+	rowNames      []string            // item names the menu was last built from
+	lastResetName string              // most recent reset, undoable until the next action
 )
 
 func onReady() {
@@ -130,6 +131,17 @@ func rebuildMenuLocked() {
 		}
 	}
 
+	if lastResetName != "" {
+		undo := systray.AddMenuItem(fmt.Sprintf("Undo reset of %s", lastResetName), "")
+		go func() {
+			select {
+			case <-undo.ClickedCh:
+				undoReset()
+			case <-gen:
+			}
+		}()
+	}
+
 	quit := systray.AddMenuItem("Quit", "")
 	go func() {
 		select {
@@ -138,6 +150,37 @@ func rebuildMenuLocked() {
 		case <-gen:
 		}
 	}()
+}
+
+// undoReset restores the previous lastDone of the most recent reset.
+func undoReset() {
+	menuMu.Lock()
+	name := lastResetName
+	lastResetName = ""
+	menuMu.Unlock()
+	if name == "" {
+		return
+	}
+	items, err := loadItems()
+	if err != nil {
+		log.Printf("loading items: %v", err)
+		return
+	}
+	for i := range items {
+		if items[i].Name == name && len(items[i].History) > 0 {
+			last := len(items[i].History) - 1
+			items[i].LastDone = items[i].History[last]
+			items[i].History = items[i].History[:last]
+			if len(items[i].History) == 0 {
+				items[i].History = nil
+			}
+			break
+		}
+	}
+	if err := saveItems(items); err != nil {
+		log.Printf("saving items: %v", err)
+	}
+	rebuildMenu()
 }
 
 // addItem prompts for a name and appends a new item with lastDone = now.
@@ -205,5 +248,8 @@ func resetItem(name string) {
 	if err := saveItems(items); err != nil {
 		log.Printf("saving items: %v", err)
 	}
+	menuMu.Lock()
+	lastResetName = name
+	menuMu.Unlock()
 	rebuildMenu()
 }
