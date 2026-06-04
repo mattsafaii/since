@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"sort"
 	"sync"
 	"time"
 
@@ -43,6 +44,7 @@ func refreshMenu() {
 		rebuildMenuLocked()
 		return
 	}
+	sortByLongestSince(items)
 
 	same := len(items) == len(rowNames)
 	if same {
@@ -88,6 +90,7 @@ func rebuildMenuLocked() {
 		broken := systray.AddMenuItem("Couldn't read items.json", "")
 		broken.Disable()
 	}
+	sortByLongestSince(items)
 
 	now := time.Now()
 	for _, it := range items {
@@ -163,6 +166,14 @@ func rebuildMenuLocked() {
 		case <-gen:
 		}
 	}()
+}
+
+// sortByLongestSince orders rows most-neglected-first for display only —
+// items.json keeps its own order.
+func sortByLongestSince(items []Item) {
+	sort.SliceStable(items, func(i, j int) bool {
+		return items[i].LastDone.Before(items[j].LastDone)
+	})
 }
 
 // undoReset restores the previous lastDone of the most recent reset.
