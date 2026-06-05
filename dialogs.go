@@ -38,6 +38,20 @@ func alertDuplicate(name string) {
 	).Run()
 }
 
+// confirmEndStreak asks before resetting a streak — a misclick would
+// kill the trophy. length is the current streak ("4 months"), or ""
+// when it's too young to phrase that way.
+func confirmEndStreak(name, length string) bool {
+	msg := `End “` + escapeAppleScript(name) + `” streak?`
+	if length != "" {
+		msg = `End your ` + escapeAppleScript(length) + ` “` + escapeAppleScript(name) + `” streak?`
+	}
+	err := exec.Command("osascript", "-e",
+		`display dialog "`+msg+`" with title "Since" buttons {"Cancel", "End Streak"} default button "Cancel"`,
+	).Run()
+	return err == nil // cancelled dialogs exit non-zero
+}
+
 // confirmRemove shows a native confirm dialog; true means delete it.
 func confirmRemove(name string) bool {
 	err := exec.Command("osascript", "-e",

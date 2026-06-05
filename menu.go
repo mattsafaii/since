@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -99,10 +100,15 @@ func rebuildMenuLocked() {
 		menuRows = append(menuRows, row)
 		rowNames = append(rowNames, it.Name)
 		name := it.Name
+		streak := it.IsStreak()
 		go func() {
 			select {
 			case <-row.ClickedCh:
-				resetItem(name)
+				if streak {
+					endStreak(name)
+				} else {
+					resetItem(name)
+				}
 			case <-gen:
 			}
 		}()
@@ -325,6 +331,29 @@ func removeItem(name string) {
 		log.Printf("saving items: %v", err)
 	}
 	rebuildMenu()
+}
+
+// endStreak confirms (naming the current streak length), then resets.
+func endStreak(name string) {
+	items, err := loadItems()
+	if err != nil {
+		log.Printf("loading items: %v", err)
+		return
+	}
+	length := ""
+	for _, it := range items {
+		if it.Name == name {
+			rel := relative(it.LastDone, time.Now())
+			if cut, found := strings.CutSuffix(rel, " ago"); found {
+				length = cut // "4 months ago" → "4 months"
+			}
+			break
+		}
+	}
+	if !confirmEndStreak(name, length) {
+		return
+	}
+	resetItem(name)
 }
 
 // resetItem sets an item's lastDone to now, writes the file, and redraws.
