@@ -49,6 +49,13 @@ func (it Item) TargetDays() (days int, ok bool) {
 	return 0, false
 }
 
+// Overdue reports whether a chore is past its target interval.
+// Streaks are never overdue.
+func (it Item) Overdue(now time.Time) bool {
+	days, ok := it.TargetDays()
+	return ok && daysBetween(it.LastDone, now) > days
+}
+
 // itemsPath returns ~/.config/since/items.json.
 func itemsPath() (string, error) {
 	home, err := os.UserHomeDir()

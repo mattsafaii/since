@@ -62,7 +62,7 @@ func refreshMenu() {
 
 	now := time.Now()
 	for i, it := range items {
-		menuRows[i].SetTitle(fmt.Sprintf("%s — %s", it.Name, sinceLabel(it.LastDone, now)))
+		menuRows[i].SetTitle(rowLabel(it, now))
 	}
 }
 
@@ -94,7 +94,7 @@ func rebuildMenuLocked() {
 
 	now := time.Now()
 	for _, it := range items {
-		row := systray.AddMenuItem(fmt.Sprintf("%s — %s", it.Name, sinceLabel(it.LastDone, now)), "Click to reset to today")
+		row := systray.AddMenuItem(rowLabel(it, now), "Click to reset to today")
 		menuRows = append(menuRows, row)
 		rowNames = append(rowNames, it.Name)
 		name := it.Name
@@ -166,6 +166,16 @@ func rebuildMenuLocked() {
 		case <-gen:
 		}
 	}()
+}
+
+// rowLabel renders one menu row: name, coarse relative, date, and a
+// ⚠ suffix when a chore is past its target interval.
+func rowLabel(it Item, now time.Time) string {
+	label := fmt.Sprintf("%s — %s", it.Name, sinceLabel(it.LastDone, now))
+	if it.Overdue(now) {
+		label += " ⚠"
+	}
+	return label
 }
 
 // sortByLongestSince orders rows most-neglected-first for display only —
