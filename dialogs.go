@@ -5,17 +5,25 @@ import (
 	"strings"
 )
 
-// promptForName shows a native text-input dialog and returns the entered
-// name. ok is false when the dialog is cancelled or the input is empty.
-func promptForName() (name string, ok bool) {
+// promptForName shows a native text-input dialog. The button picks the
+// kind: Chore for things to do again, Streak for things being avoided.
+// ok is false when the dialog is cancelled or the input is empty.
+func promptForName() (name string, streak, ok bool) {
+	// The input is a single line, so a linefeed can't appear in the
+	// name and safely separates it from the button choice.
 	out, err := exec.Command("osascript", "-e",
-		`text returned of (display dialog "What do you want to track?" default answer "" with title "Since" buttons {"Cancel", "Add"} default button "Add")`,
+		`set d to display dialog "What do you want to track?" default answer "" with title "Since" buttons {"Cancel", "Streak", "Chore"} default button "Chore"`,
+		"-e", `(text returned of d) & linefeed & (button returned of d)`,
 	).Output()
 	if err != nil { // cancelled
-		return "", false
+		return "", false, false
 	}
-	name = strings.TrimSpace(string(out))
-	return name, name != ""
+	text, button, found := strings.Cut(strings.TrimRight(string(out), "\n"), "\n")
+	if !found {
+		return "", false, false
+	}
+	name = strings.TrimSpace(text)
+	return name, button == "Streak", name != ""
 }
 
 // promptForRename shows a text-input dialog pre-filled with the current

@@ -251,9 +251,10 @@ func undoReset() {
 	rebuildMenu()
 }
 
-// addItem prompts for a name and appends a new item with lastDone = now.
+// addItem prompts for a name and kind, then appends a new item with
+// lastDone = now.
 func addItem() {
-	name, ok := promptForName()
+	name, streak, ok := promptForName()
 	if !ok {
 		return
 	}
@@ -270,7 +271,11 @@ func addItem() {
 			return
 		}
 	}
-	items = append(items, Item{Name: name, LastDone: time.Now()})
+	kind := ""
+	if streak {
+		kind = "streak"
+	}
+	items = append(items, Item{Name: name, LastDone: time.Now(), Kind: kind})
 	if err := saveItems(items); err != nil {
 		log.Printf("saving items: %v", err)
 	}
