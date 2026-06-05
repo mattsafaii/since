@@ -44,12 +44,14 @@ func refreshMenu() {
 		rebuildMenuLocked()
 		return
 	}
-	sortByLongestSince(items)
+	now := time.Now()
+	chores, streaks := displayOrder(items, now)
+	ordered := append(chores, streaks...)
 
-	same := len(items) == len(rowNames)
+	same := len(ordered) == len(rowNames)
 	if same {
-		for i := range items {
-			if items[i].Name != rowNames[i] {
+		for i := range ordered {
+			if ordered[i].Name != rowNames[i] {
 				same = false
 				break
 			}
@@ -60,8 +62,7 @@ func refreshMenu() {
 		return
 	}
 
-	now := time.Now()
-	for i, it := range items {
+	for i, it := range ordered {
 		menuRows[i].SetTitle(rowLabel(it, now))
 	}
 }
@@ -90,10 +91,10 @@ func rebuildMenuLocked() {
 		broken := systray.AddMenuItem("Couldn't read items.json", "")
 		broken.Disable()
 	}
-	sortByLongestSince(items)
-
 	now := time.Now()
-	for _, it := range items {
+	chores, streaks := displayOrder(items, now)
+
+	addRow := func(it Item) {
 		row := systray.AddMenuItem(rowLabel(it, now), "Click to reset to today")
 		menuRows = append(menuRows, row)
 		rowNames = append(rowNames, it.Name)
@@ -105,6 +106,16 @@ func rebuildMenuLocked() {
 			case <-gen:
 			}
 		}()
+	}
+
+	for _, it := range chores {
+		addRow(it)
+	}
+	if len(chores) > 0 && len(streaks) > 0 {
+		systray.AddSeparator()
+	}
+	for _, it := range streaks {
+		addRow(it)
 	}
 	if len(items) > 0 {
 		systray.AddSeparator()
@@ -120,8 +131,9 @@ func rebuildMenuLocked() {
 	}()
 
 	if len(items) > 0 {
+		ordered := append(chores, streaks...)
 		rename := systray.AddMenuItem("Rename", "")
-		for _, it := range items {
+		for _, it := range ordered {
 			sub := rename.AddSubMenuItem(it.Name, "")
 			name := it.Name
 			go func() {
@@ -134,7 +146,7 @@ func rebuildMenuLocked() {
 		}
 
 		remove := systray.AddMenuItem("Remove", "")
-		for _, it := range items {
+		for _, it := range ordered {
 			sub := remove.AddSubMenuItem(it.Name, "")
 			name := it.Name
 			go func() {
@@ -178,12 +190,28 @@ func rowLabel(it Item, now time.Time) string {
 	return label
 }
 
-// sortByLongestSince orders rows most-neglected-first for display only —
-// items.json keeps its own order.
-func sortByLongestSince(items []Item) {
-	sort.SliceStable(items, func(i, j int) bool {
-		return items[i].LastDone.Before(items[j].LastDone)
+// displayOrder splits items into menu sections: chores (overdue before
+// not, longest-since within each) and streaks (longest first, read as
+// records). Display only — items.json keeps its own order.
+func displayOrder(items []Item, now time.Time) (chores, streaks []Item) {
+	for _, it := range items {
+		if it.IsStreak() {
+			streaks = append(streaks, it)
+		} else {
+			chores = append(chores, it)
+		}
+	}
+	sort.SliceStable(chores, func(i, j int) bool {
+		oi, oj := chores[i].Overdue(now), chores[j].Overdue(now)
+		if oi != oj {
+			return oi
+		}
+		return chores[i].LastDone.Before(chores[j].LastDone)
 	})
+	sort.SliceStable(streaks, func(i, j int) bool {
+		return streaks[i].LastDone.Before(streaks[j].LastDone)
+	})
+	return chores, streaks
 }
 
 // undoReset restores the previous lastDone of the most recent reset.
