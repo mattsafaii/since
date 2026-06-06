@@ -7,8 +7,14 @@ import (
 
 // sinceLabel renders a coarse relative label plus the calendar date,
 // e.g. "today (Jun 3)", "yesterday (Jun 2)", "3 weeks ago (May 12)".
+// Dates from another calendar year include the year — "Feb 1" alone
+// is ambiguous once a streak is over a year old.
 func sinceLabel(lastDone, now time.Time) string {
-	return fmt.Sprintf("%s (%s)", relative(lastDone, now), lastDone.Format("Jan 2"))
+	format := "Jan 2"
+	if lastDone.Local().Year() != now.Local().Year() {
+		format = "Jan 2, 2006"
+	}
+	return fmt.Sprintf("%s (%s)", relative(lastDone, now), lastDone.Format(format))
 }
 
 // relative rounds the elapsed time to the largest sensible unit,
@@ -28,12 +34,18 @@ func relative(lastDone, now time.Time) string {
 			return "1 week ago"
 		}
 		return fmt.Sprintf("%d weeks ago", weeks)
-	default:
+	case days < 365:
 		months := days / 30
 		if months == 1 {
 			return "1 month ago"
 		}
 		return fmt.Sprintf("%d months ago", months)
+	default:
+		years := days / 365
+		if years == 1 {
+			return "1 year ago"
+		}
+		return fmt.Sprintf("%d years ago", years)
 	}
 }
 

@@ -1,6 +1,6 @@
 APP = dist/Since.app
 
-.PHONY: app install login icon clean
+.PHONY: app install login uninstall icon clean
 
 # Assemble Since.app from the binary, Info.plist, and icon.
 app:
@@ -22,6 +22,13 @@ login: install
 	cp assets/com.mattsafaii.since.plist ~/Library/LaunchAgents/
 	launchctl bootout gui/$$(id -u)/com.mattsafaii.since 2>/dev/null || true
 	launchctl bootstrap gui/$$(id -u) ~/Library/LaunchAgents/com.mattsafaii.since.plist
+
+# Remove the app, the LaunchAgent, and any running instance.
+uninstall:
+	launchctl bootout gui/$$(id -u)/com.mattsafaii.since 2>/dev/null || true
+	rm -f ~/Library/LaunchAgents/com.mattsafaii.since.plist
+	pkill -f /Applications/Since.app/Contents/MacOS/since || true
+	rm -rf /Applications/Since.app
 
 # Regenerate assets/Since.icns from the Swift drawing script.
 icon:

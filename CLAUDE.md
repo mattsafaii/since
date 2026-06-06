@@ -29,10 +29,11 @@ Everything lives in the dropdown — no windows:
 - "Add item…": osascript dialog, buttons Cancel / Streak / Chore set the kind; rejects duplicate names
 - "Rename ▸": submenu, keeps lastDone + history
 - "Remove ▸": submenu of items, osascript confirm before delete
+- "Edit items…": opens items.json in the default editor — the closest thing to a settings screen
 - "Quit"
 - Empty state: just "Add item…" and "Quit"
 
-Time labels are coarse, rounded to the largest sensible unit: today / yesterday / N days ago / N weeks ago / N months ago, plus the calendar date in parens. Overdue = elapsed > `every`, binary.
+Time labels are coarse, rounded to the largest sensible unit: today / yesterday / N days ago / N weeks ago / N months ago / N years ago, plus the calendar date in parens (with the year when it's not the current year). Overdue = elapsed > `every`, binary.
 
 ## No-gos
 
@@ -45,11 +46,11 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 - No settings window, no Fyne/Wails windows
 - No sync, accounts, or network of any kind
 
-## Current cycle: v2 — kinds + intervals
+## Current batch: polish — labels, tests, edit row
 
-- PRD doc: https://app.basecamp.com/6191443/buckets/47572591/documents/9966288025
-- Build todolist id `9966288907` (13 todos: 5 build, 8 verify)
-- Pitch + PRD card: https://app.basecamp.com/6191443/buckets/46824335/card_tables/cards/9962250900
+- Todolist id `9969595703` (10 todos: 6 build, 3 verify, 1 dev log)
+- Year-aware labels, committed test suite (`go test ./...`), "Edit items…" row, streak tooltip fix, `make uninstall`
+- Shipped cycles: v1 (todolist `9961626562`), v2 kinds + intervals (todolist `9966288907`, PRD https://app.basecamp.com/6191443/buckets/47572591/documents/9966288025)
 
 ## Dev Log
 

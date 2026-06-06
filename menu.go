@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os/exec"
 	"sort"
 	"strings"
 	"sync"
@@ -96,7 +97,11 @@ func rebuildMenuLocked() {
 	chores, streaks := displayOrder(items, now)
 
 	addRow := func(it Item) {
-		row := systray.AddMenuItem(rowLabel(it, now), "Click to reset to today")
+		tooltip := "Click to reset to today"
+		if it.IsStreak() {
+			tooltip = "Click to end this streak"
+		}
+		row := systray.AddMenuItem(rowLabel(it, now), tooltip)
 		menuRows = append(menuRows, row)
 		rowNames = append(rowNames, it.Name)
 		name := it.Name
@@ -163,6 +168,15 @@ func rebuildMenuLocked() {
 				}
 			}()
 		}
+
+		edit := systray.AddMenuItem("Edit items…", "Open items.json in your editor")
+		go func() {
+			select {
+			case <-edit.ClickedCh:
+				editItems()
+			case <-gen:
+			}
+		}()
 	}
 
 	if lastResetName != "" {
@@ -249,6 +263,19 @@ func undoReset() {
 		log.Printf("saving items: %v", err)
 	}
 	rebuildMenu()
+}
+
+// editItems opens items.json in the default editor — it's the only
+// settings surface, so this is the closest thing to a settings screen.
+func editItems() {
+	path, err := itemsPath()
+	if err != nil {
+		log.Printf("finding items.json: %v", err)
+		return
+	}
+	if err := exec.Command("open", path).Start(); err != nil {
+		log.Printf("opening items.json: %v", err)
+	}
 }
 
 // addItem prompts for a name and kind, then appends a new item with

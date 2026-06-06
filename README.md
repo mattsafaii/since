@@ -11,7 +11,7 @@ Items come in two kinds:
 - **Chores** — things to do again (Haircut, Brita filter). Optionally take a target interval (`"every": "6w"`); rows past their target show a ⚠. Sorted most-overdue-first, so the top of the menu is the "needs attention" zone. Click to reset instantly.
 - **Streaks** — things being avoided (Smoked, Alcohol). Longer is better; sorted longest-first and shown below a separator so they read as records, not neglect. Clicking asks for confirmation first ("End your 4 months streak?") — a misclick shouldn't kill the trophy.
 
-Both kinds are undoable after a reset via "Undo reset of …". Labels are coarse on purpose: today / yesterday / N days / N weeks / N months ago, plus the date.
+Both kinds are undoable after a reset via "Undo reset of …". Labels are coarse on purpose: today / yesterday / N days / N weeks / N months / N years ago, plus the date (with the year once it's not this year's).
 
 ## Data
 
@@ -30,7 +30,7 @@ Everything lives in `~/.config/since/items.json` — human-readable, hand-editab
 
 The menu rebuilds from the file every time it opens, so hand-edits show up without a restart. Typos never break anything — an unparseable interval just means no target.
 
-This file is the only settings surface. There is no settings window.
+This file is the only settings surface. There is no settings window — "Edit items…" in the menu opens it in your default editor.
 
 ## Install
 
@@ -41,7 +41,7 @@ make install   # build Since.app and copy it to /Applications
 make login     # also start at login (installs a LaunchAgent)
 ```
 
-Other targets: `make app` (build the bundle into `dist/`), `make icon` (regenerate the icns from the Swift drawing script).
+Other targets: `make app` (build the bundle into `dist/`), `make icon` (regenerate the icns from the Swift drawing script), `make uninstall` (remove the app and LaunchAgent).
 
 ## Stack
 
