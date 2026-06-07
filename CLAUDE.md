@@ -4,25 +4,19 @@ macOS menu bar app that answers "when did I last do X?" (haircut, Brita filter, 
 
 ## Current cycle: Swift rewrite
 
-Feature-parity port from Go to Swift/AppKit. Every UX wall in the Go version was the cross-platform systray abstraction (positioning fork with PR #119 still open, NSMenu rebuild corruption, osascript dialogs, no ⌥-click alternates) — native AppKit makes all of it first-class. items.json carries over untouched. Swift replaces Go on master; tag the last Go commit `go-final` first (Setup todo 1). Parity only: behavior below describes the Go app and is the contract for the Swift port.
+Feature-parity port from Go to Swift/AppKit — every UX wall in the Go version was the cross-platform systray abstraction (positioning fork, NSMenu rebuild corruption, osascript dialogs, no ⌥-click alternates). Cutover is done: Swift replaced Go on master, items.json carried over untouched, and the last Go commit is tagged `go-final`. Remaining work is the Verify todos (Matt's hand-testing).
 
 - PRD doc: https://app.basecamp.com/6191443/buckets/47572591/documents/9970247376
 - Build todolist id `9970265495` (17 todos: 2 setup, 6 build, 8 verify, 1 dev log)
 - Pitch + PRD card: https://app.basecamp.com/6191443/buckets/46824335/card_tables/cards/9970163011
 
-## Stack (target)
+## Stack
 
 - Swift + AppKit: `NSStatusItem` + `NSMenu` (menu rebuilt in `NSMenuDelegate.menuNeedsUpdate`), `NSAlert` dialogs with text-field accessories
 - SPM executable target — no Xcode project, no SwiftUI, no MenuBarExtra
-- XCTest; the Go table-driven tests port over as the parity suite
-- Makefile assembles Since.app from `swift build` (same targets: app/install/login/uninstall/icon), ad-hoc codesign
+- XCTest; the Go table-driven tests ported over as the parity suite, plus a round-trip test against a Go-written items.json fixture
+- Makefile assembles Since.app from `swift build -c release` (targets: app/install/login/uninstall/icon/clean), ad-hoc codesign
 - No dependencies
-
-## Stack (current Go app, until cutover)
-
-- Go, module `github.com/mattsafaii/since`, binary `since`
-- `fyne.io/systray` for the menu bar icon + dropdown (pinned to a fork until fyne-io/systray#119 — moot after the rewrite)
-- Native macOS dialogs by shelling out to `osascript`
 
 ## Data contract
 
@@ -41,7 +35,7 @@ Everything lives in the dropdown — no windows:
 
 - Two sections, separator between: **chores** on top (most-overdue-first, then longest-since; overdue rows get a ⚠ suffix), **streaks** below (longest-first, read as records — never overdue)
 - Item rows: `name — <coarse relative> (<date>)`, e.g. "Haircut — 3 weeks ago (May 12)". Chore click resets instantly; streak click confirms first, naming the streak length ("End 4-month streak?"). Both undoable via "Undo reset of <name>".
-- "Add item…": osascript dialog, buttons Cancel / Streak / Chore set the kind; rejects duplicate names
+- "Add item…": NSAlert with a text field, buttons Cancel / Streak / Chore set the kind; rejects duplicate names
 - "Edit ▸": submenu of items; clicking a name opens one dialog (name pre-filled, buttons Cancel / Remove / Rename). Rename keeps lastDone + history and rejects duplicates; Remove confirms before deleting
 - "Open items.json": opens the file in the default editor — the closest thing to a settings screen
 - "Quit"

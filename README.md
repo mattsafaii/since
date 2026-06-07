@@ -34,7 +34,7 @@ This file is the only settings surface. There is no settings window — "Open it
 
 ## Install
 
-Requires Go and macOS.
+Requires macOS and the Swift toolchain (Xcode Command Line Tools).
 
 ```bash
 make install   # build Since.app and copy it to /Applications
@@ -45,7 +45,8 @@ Other targets: `make app` (build the bundle into `dist/`), `make icon` (regenera
 
 ## Stack
 
-- Go + [fyne.io/systray](https://github.com/fyne-io/systray) for the menu bar icon and dropdown
-  - currently pinned to [a fork](https://github.com/mattsafaii/systray/tree/fix-macos-menu-position) until [fyne-io/systray#119](https://github.com/fyne-io/systray/pull/119) lands (menu opened behind the macOS menu bar)
-- Native dialogs by shelling out to `osascript` — no GUI framework
-- No other dependencies
+- Swift + AppKit: `NSStatusItem` + `NSMenu`, native `NSAlert` dialogs
+- SPM executable target — no Xcode project, no SwiftUI
+- No dependencies
+
+The original Go version (fyne.io/systray + osascript dialogs) is preserved at the [`go-final`](https://github.com/mattsafaii/since/releases/tag/go-final) tag.

@@ -2,14 +2,15 @@ APP = dist/Since.app
 
 .PHONY: app install login uninstall icon clean
 
-# Assemble Since.app from the binary, Info.plist, and icon.
+# Assemble Since.app from the swift build, Info.plist, and icon.
 app:
-	go build -o dist/since .
+	swift build -c release
 	rm -rf $(APP)
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
-	mv dist/since $(APP)/Contents/MacOS/since
+	cp .build/release/Since $(APP)/Contents/MacOS/since
 	cp assets/Info.plist $(APP)/Contents/Info.plist
 	cp assets/Since.icns $(APP)/Contents/Resources/Since.icns
+	codesign --force --sign - $(APP)
 
 # Copy the bundle into /Applications.
 install: app
@@ -42,4 +43,4 @@ icon:
 	rm -rf assets/Since.iconset
 
 clean:
-	rm -rf dist
+	rm -rf dist .build
