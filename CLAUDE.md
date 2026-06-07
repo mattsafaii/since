@@ -1,13 +1,28 @@
 # Since
 
-macOS menu bar app that answers "when did I last do X?" (haircut, Brita filter, contacts). Each tracked item is a menu row showing time since last done; clicking a row resets its timer. Local-only, no network. Also a Go learning project for Matt.
+macOS menu bar app that answers "when did I last do X?" (haircut, Brita filter, contacts). Each tracked item is a menu row showing time since last done; clicking a row resets its timer. Local-only, no network.
 
-## Stack
+## Current cycle: Swift rewrite
+
+Feature-parity port from Go to Swift/AppKit. Every UX wall in the Go version was the cross-platform systray abstraction (positioning fork with PR #119 still open, NSMenu rebuild corruption, osascript dialogs, no ⌥-click alternates) — native AppKit makes all of it first-class. items.json carries over untouched. Swift replaces Go on master; tag the last Go commit `go-final` first (Setup todo 1). Parity only: behavior below describes the Go app and is the contract for the Swift port.
+
+- PRD doc: https://app.basecamp.com/6191443/buckets/47572591/documents/9970247376
+- Build todolist id `9970265495` (17 todos: 2 setup, 6 build, 8 verify, 1 dev log)
+- Pitch + PRD card: https://app.basecamp.com/6191443/buckets/46824335/card_tables/cards/9970163011
+
+## Stack (target)
+
+- Swift + AppKit: `NSStatusItem` + `NSMenu` (menu rebuilt in `NSMenuDelegate.menuNeedsUpdate`), `NSAlert` dialogs with text-field accessories
+- SPM executable target — no Xcode project, no SwiftUI, no MenuBarExtra
+- XCTest; the Go table-driven tests port over as the parity suite
+- Makefile assembles Since.app from `swift build` (same targets: app/install/login/uninstall/icon), ad-hoc codesign
+- No dependencies
+
+## Stack (current Go app, until cutover)
 
 - Go, module `github.com/mattsafaii/since`, binary `since`
-- `fyne.io/systray` for the menu bar icon + dropdown
-- Native macOS dialogs by shelling out to `osascript` (add/remove) — no Go GUI framework
-- No other dependencies
+- `fyne.io/systray` for the menu bar icon + dropdown (pinned to a fork until fyne-io/systray#119 — moot after the rewrite)
+- Native macOS dialogs by shelling out to `osascript`
 
 ## Data contract
 
@@ -45,11 +60,9 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 - No settings window, no Fyne/Wails windows
 - No sync, accounts, or network of any kind
 
-## Current batch: Edit menu — fold Rename + Remove
+## Shipped cycles
 
-- Todolist id `9970120602` (7 todos: 3 build, 3 verify, 1 dev log)
-- One Edit ▸ submenu replaces Rename ▸ / Remove ▸; "Edit items…" renamed to "Open items.json"
-- Shipped: v1 (todolist `9961626562`), v2 kinds + intervals (todolist `9966288907`, PRD https://app.basecamp.com/6191443/buckets/47572591/documents/9966288025), polish batch (todolist `9969595703`)
+v1 (todolist `9961626562`), v2 kinds + intervals (todolist `9966288907`), polish batch (todolist `9969595703`), Edit menu (todolist `9970120602`) — all Go.
 
 ## Dev Log
 
