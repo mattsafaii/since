@@ -1,3 +1,4 @@
-since
-dist
+/since
+/dist
 .basecamp/
+.build/
