@@ -27,9 +27,8 @@ Everything lives in the dropdown — no windows:
 - Two sections, separator between: **chores** on top (most-overdue-first, then longest-since; overdue rows get a ⚠ suffix), **streaks** below (longest-first, read as records — never overdue)
 - Item rows: `name — <coarse relative> (<date>)`, e.g. "Haircut — 3 weeks ago (May 12)". Chore click resets instantly; streak click confirms first, naming the streak length ("End 4-month streak?"). Both undoable via "Undo reset of <name>".
 - "Add item…": osascript dialog, buttons Cancel / Streak / Chore set the kind; rejects duplicate names
-- "Rename ▸": submenu, keeps lastDone + history
-- "Remove ▸": submenu of items, osascript confirm before delete
-- "Edit items…": opens items.json in the default editor — the closest thing to a settings screen
+- "Edit ▸": submenu of items; clicking a name opens one dialog (name pre-filled, buttons Cancel / Remove / Rename). Rename keeps lastDone + history and rejects duplicates; Remove confirms before deleting
+- "Open items.json": opens the file in the default editor — the closest thing to a settings screen
 - "Quit"
 - Empty state: just "Add item…" and "Quit"
 
@@ -46,11 +45,11 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 - No settings window, no Fyne/Wails windows
 - No sync, accounts, or network of any kind
 
-## Current batch: polish — labels, tests, edit row
+## Current batch: Edit menu — fold Rename + Remove
 
-- Todolist id `9969595703` (10 todos: 6 build, 3 verify, 1 dev log)
-- Year-aware labels, committed test suite (`go test ./...`), "Edit items…" row, streak tooltip fix, `make uninstall`
-- Shipped cycles: v1 (todolist `9961626562`), v2 kinds + intervals (todolist `9966288907`, PRD https://app.basecamp.com/6191443/buckets/47572591/documents/9966288025)
+- Todolist id `9970120602` (7 todos: 3 build, 3 verify, 1 dev log)
+- One Edit ▸ submenu replaces Rename ▸ / Remove ▸; "Edit items…" renamed to "Open items.json"
+- Shipped: v1 (todolist `9961626562`), v2 kinds + intervals (todolist `9966288907`, PRD https://app.basecamp.com/6191443/buckets/47572591/documents/9966288025), polish batch (todolist `9969595703`)
 
 ## Dev Log
 

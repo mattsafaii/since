@@ -26,17 +26,22 @@ func promptForName() (name string, streak, ok bool) {
 	return name, button == "Streak", name != ""
 }
 
-// promptForRename shows a text-input dialog pre-filled with the current
-// name. ok is false when cancelled, empty, or unchanged.
-func promptForRename(current string) (name string, ok bool) {
+// promptForEdit shows one dialog for an item: its name in a text field,
+// with Remove and Rename as the actions. button is "Remove" or "Rename";
+// ok is false when cancelled.
+func promptForEdit(current string) (name, button string, ok bool) {
 	out, err := exec.Command("osascript", "-e",
-		`text returned of (display dialog "Rename “`+escapeAppleScript(current)+`” to:" default answer "`+escapeAppleScript(current)+`" with title "Since" buttons {"Cancel", "Rename"} default button "Rename")`,
+		`set d to display dialog "Edit “`+escapeAppleScript(current)+`”:" default answer "`+escapeAppleScript(current)+`" with title "Since" buttons {"Cancel", "Remove", "Rename"} default button "Rename"`,
+		"-e", `(text returned of d) & linefeed & (button returned of d)`,
 	).Output()
 	if err != nil { // cancelled
-		return "", false
+		return "", "", false
 	}
-	name = strings.TrimSpace(string(out))
-	return name, name != "" && name != current
+	text, button, found := strings.Cut(strings.TrimRight(string(out), "\n"), "\n")
+	if !found {
+		return "", "", false
+	}
+	return strings.TrimSpace(text), button, true
 }
 
 // alertDuplicate tells the user an item with this name already exists.

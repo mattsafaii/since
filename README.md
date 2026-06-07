@@ -30,7 +30,7 @@ Everything lives in `~/.config/since/items.json` — human-readable, hand-editab
 
 The menu rebuilds from the file every time it opens, so hand-edits show up without a restart. Typos never break anything — an unparseable interval just means no target.
 
-This file is the only settings surface. There is no settings window — "Edit items…" in the menu opens it in your default editor.
+This file is the only settings surface. There is no settings window — "Open items.json" in the menu opens it in your default editor. Renaming and removing items happens through the "Edit" submenu: click an item's name to get a single dialog with Remove and Rename.
 
 ## Install
 

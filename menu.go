@@ -143,37 +143,24 @@ func rebuildMenuLocked() {
 
 	if len(items) > 0 {
 		ordered := append(chores, streaks...)
-		rename := systray.AddMenuItem("Rename", "")
+		edit := systray.AddMenuItem("Edit", "")
 		for _, it := range ordered {
-			sub := rename.AddSubMenuItem(it.Name, "")
+			sub := edit.AddSubMenuItem(it.Name, "")
 			name := it.Name
 			go func() {
 				select {
 				case <-sub.ClickedCh:
-					renameItem(name)
+					editItem(name)
 				case <-gen:
 				}
 			}()
 		}
 
-		remove := systray.AddMenuItem("Remove", "")
-		for _, it := range ordered {
-			sub := remove.AddSubMenuItem(it.Name, "")
-			name := it.Name
-			go func() {
-				select {
-				case <-sub.ClickedCh:
-					removeItem(name)
-				case <-gen:
-				}
-			}()
-		}
-
-		edit := systray.AddMenuItem("Edit items…", "Open items.json in your editor")
+		open := systray.AddMenuItem("Open items.json", "Open items.json in your editor")
 		go func() {
 			select {
-			case <-edit.ClickedCh:
-				editItems()
+			case <-open.ClickedCh:
+				openItemsFile()
 			case <-gen:
 			}
 		}()
@@ -265,9 +252,9 @@ func undoReset() {
 	rebuildMenu()
 }
 
-// editItems opens items.json in the default editor — it's the only
+// openItemsFile opens items.json in the default editor — it's the only
 // settings surface, so this is the closest thing to a settings screen.
-func editItems() {
+func openItemsFile() {
 	path, err := itemsPath()
 	if err != nil {
 		log.Printf("finding items.json: %v", err)
@@ -309,10 +296,23 @@ func addItem() {
 	rebuildMenu()
 }
 
-// renameItem prompts for a new name, keeping lastDone and history.
-func renameItem(oldName string) {
-	newName, ok := promptForRename(oldName)
+// editItem shows the edit dialog and routes the chosen action:
+// Remove confirms then deletes; Rename keeps lastDone and history.
+func editItem(name string) {
+	newName, button, ok := promptForEdit(name)
 	if !ok {
+		return
+	}
+	if button == "Remove" {
+		removeItem(name)
+		return
+	}
+	renameItem(name, newName)
+}
+
+// renameItem renames an item, keeping lastDone and history.
+func renameItem(oldName, newName string) {
+	if newName == "" || newName == oldName {
 		return
 	}
 	items, err := loadItems()
