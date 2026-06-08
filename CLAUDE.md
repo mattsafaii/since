@@ -2,13 +2,18 @@
 
 macOS menu bar app that answers "when did I last do X?" (haircut, Brita filter, contacts). Each tracked item is a menu row showing time since last done; clicking a row resets its timer. Local-only, no network.
 
-## Current cycle: Swift rewrite
+## Current cycle: Row Redesign
 
-Feature-parity port from Go to Swift/AppKit — every UX wall in the Go version was the cross-platform systray abstraction (positioning fork, NSMenu rebuild corruption, osascript dialogs, no ⌥-click alternates). Cutover is done: Swift replaced Go on master, items.json carried over untouched, and the last Go commit is tagged `go-final`. Remaining work is the Verify todos (Matt's hand-testing).
+Replace the flat, uniform-weight text rows with custom `NSView` rows that carry visual hierarchy and one semantic color channel — encoding, not decoration. The Swift rewrite (now shipped) makes custom row rendering first-class; this cycle spends that. Changes are confined to the menu-rendering layer (`MenuController`/`Menu`) plus a small item-model addition; `Storage`, `Dialogs`, `Labels`, and the items.json contract are untouched. The design is decided — see the PRD.
 
-- PRD doc: https://app.basecamp.com/6191443/buckets/47572591/documents/9970247376
-- Build todolist id `9970265495` (17 todos: 2 setup, 6 build, 8 verify, 1 dev log)
-- Pitch + PRD card: https://app.basecamp.com/6191443/buckets/46824335/card_tables/cards/9970163011
+- **Row anatomy:** leading status dot · item name (primary weight) · right-aligned elapsed time as the hero (tabular figures, common trailing edge) · calendar date demoted (small, dimmed)
+- **Status dot, semantic only:** amber = overdue chore; green = streak in record territory; neutral otherwise. Filled ● vs hollow ○ is a redundant channel; ⚠ stays on overdue. `NSColor.systemOrange`/`systemGreen` adapt to dark/light
+- **Record territory:** green only when `history` is non-empty AND current elapsed (now − lastDone) exceeds the longest prior gap reconstructable from `history` + lastDone. Empty-history streaks stay neutral. Computed live, read-only — nothing written to items.json
+- **Highlight state:** text AND dot recolor on the system selection fill so nothing low-contrasts; click/keyboard/accessibility parity with native rows is the core work
+- Existing labels (`relative`, `sinceLabel`, ⚠ logic) reused verbatim — only presentation changes
+- PRD doc: https://app.basecamp.com/6191443/buckets/47572591/documents/9971644130
+- Build todolist id `9971644568` (13 todos: 5 build, 8 verify)
+- Pitch + PRD card: https://app.basecamp.com/6191443/buckets/46824335/card_tables/cards/9971050565
 
 ## Stack
 
@@ -50,13 +55,13 @@ Time labels are coarse, rounded to the largest sensible unit: today / yesterday 
 - No "due soon" intermediate state — binary overdue only
 - No interval-editing UI — items.json is the settings surface
 - No history/stats views, no contribution graph
-- No color coding beyond the ⚠ character
+- No color anywhere but the status dot — no row tint, no text recolor beyond highlight legibility, no "due soon" gradient (as of the Row Redesign cycle; the dot is the one semantic color channel)
 - No settings window, no Fyne/Wails windows
 - No sync, accounts, or network of any kind
 
 ## Shipped cycles
 
-v1 (todolist `9961626562`), v2 kinds + intervals (todolist `9966288907`), polish batch (todolist `9969595703`), Edit menu (todolist `9970120602`) — all Go.
+v1 (todolist `9961626562`), v2 kinds + intervals (todolist `9966288907`), polish batch (todolist `9969595703`), Edit menu (todolist `9970120602`) — all Go. Swift rewrite (todolist `9970265495`) — feature-parity port from Go to Swift/AppKit; Swift replaced Go on master, items.json carried over untouched, last Go commit tagged `go-final`.
 
 ## Dev Log
 
