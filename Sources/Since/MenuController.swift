@@ -35,14 +35,19 @@ final class MenuController: NSObject, NSMenuDelegate {
         let now = Date()
         let (chores, streaks) = displayOrder(items, now: now)
 
+        // One shared column layout for every row, so names/dates/times align
+        // and the elapsed times keep a common trailing edge across sections.
+        let metrics = ItemRowView.metrics(
+            for: (chores + streaks).map { content(for: $0, now: now) })
+
         for item in chores {
-            menu.addItem(row(for: item, now: now))
+            menu.addItem(row(for: item, now: now, metrics: metrics))
         }
         if !chores.isEmpty && !streaks.isEmpty {
             menu.addItem(.separator())
         }
         for item in streaks {
-            menu.addItem(row(for: item, now: now))
+            menu.addItem(row(for: item, now: now, metrics: metrics))
         }
         if !items.isEmpty {
             menu.addItem(.separator())
@@ -79,12 +84,25 @@ final class MenuController: NSObject, NSMenuDelegate {
         menu.addItem(quit)
     }
 
-    private func row(for item: Item, now: Date) -> NSMenuItem {
+    private func row(for item: Item, now: Date, metrics: RowMetrics) -> NSMenuItem {
         let row = NSMenuItem(title: rowLabel(item, now: now), action: #selector(rowClicked(_:)), keyEquivalent: "")
         row.target = self
         row.representedObject = item.name
         row.toolTip = item.isStreak ? "Click to end this streak" : "Click to reset to today"
+        row.view = ItemRowView(content: content(for: item, now: now), metrics: metrics)
         return row
+    }
+
+    /// Splits the item's labels into the pieces a row draws: name (⚠ when
+    /// overdue), demoted date, hero elapsed time, and the dot status.
+    private func content(for item: Item, now: Date) -> RowContent {
+        let overdue = item.isOverdue(now: now)
+        return RowContent(
+            name: item.name + (overdue ? " ⚠" : ""),
+            date: dateLabel(item.lastDone, now: now),
+            time: relative(item.lastDone, now: now),
+            status: status(for: item, now: now),
+            accessibility: rowLabel(item, now: now))
     }
 
     // MARK: - Actions

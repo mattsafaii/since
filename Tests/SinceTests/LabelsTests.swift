@@ -60,4 +60,12 @@ final class LabelsTests: XCTestCase {
             XCTAssertEqual(sinceLabel(tt.lastDone, now: now), tt.want, tt.name)
         }
     }
+
+    // The demoted date in a redesigned row is the same string sinceLabel puts
+    // in parens — just without them.
+    func testDateLabel() {
+        let now = date(2026, 6, 6)
+        XCTAssertEqual(dateLabel(date(2026, 5, 12), now: now), "May 12")
+        XCTAssertEqual(dateLabel(date(2025, 2, 1), now: now), "Feb 1, 2025")
+    }
 }

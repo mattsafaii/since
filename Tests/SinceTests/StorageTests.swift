@@ -54,6 +54,26 @@ final class StorageTests: XCTestCase {
         XCTAssertEqual(got, want)
     }
 
+    // Opening the menu loads items.json and must never rewrite it — a glance
+    // shouldn't reformat or reorder a hand-edited file. Loading an existing
+    // file leaves its bytes untouched.
+    func testLoadLeavesExistingFileUnchanged() throws {
+        let storage = tempStorage()
+        let original = """
+        [
+          {"name": "Haircut", "lastDone": "2026-05-12T10:00:00-07:00", "history": ["2026-03-01T09:00:00-07:00"], "kind": "streak", "every": "6w"}
+        ]
+        """
+        try FileManager.default.createDirectory(
+            at: storage.path.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(original.utf8).write(to: storage.path)
+
+        _ = try storage.load()
+
+        let after = try String(contentsOf: storage.path, encoding: .utf8)
+        XCTAssertEqual(after, original, "load rewrote items.json")
+    }
+
     func testLoadCreatesFileOnFirstRun() throws {
         let storage = tempStorage()
         let items = try storage.load()

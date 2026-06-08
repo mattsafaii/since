@@ -5,10 +5,17 @@ import Foundation
 /// Dates from another calendar year include the year — "Feb 1" alone
 /// is ambiguous once a streak is over a year old.
 func sinceLabel(_ lastDone: Date, now: Date) -> String {
+    return "\(relative(lastDone, now: now)) (\(dateLabel(lastDone, now: now)))"
+}
+
+/// Just the calendar date, "May 16" — or "May 16, 2025" when it's not the
+/// current year, since the month and day alone are ambiguous past a year.
+/// The demoted date in a redesigned row uses this without the parens.
+func dateLabel(_ lastDone: Date, now: Date) -> String {
     let calendar = Calendar.current
     let sameYear = calendar.component(.year, from: lastDone) == calendar.component(.year, from: now)
     let formatter = sameYear ? monthDay : monthDayYear
-    return "\(relative(lastDone, now: now)) (\(formatter.string(from: lastDone)))"
+    return formatter.string(from: lastDone)
 }
 
 // Fixed en_US_POSIX formats so labels match the Go app's "Jan 2" /

@@ -41,6 +41,24 @@ struct Item: Equatable {
         guard let days = targetDays else { return false }
         return daysBetween(lastDone, now) > days
     }
+
+    /// Whether the current ongoing interval (now − lastDone) is longer than
+    /// every prior interval — i.e. this streak is in record territory.
+    /// Read-only: reconstructed live from history, nothing is written.
+    ///
+    /// The done-markers in time order are history (oldest first) followed by
+    /// lastDone; the gaps between consecutive markers are the prior intervals.
+    /// With empty history there are no prior intervals, so a streak in its
+    /// first-ever interval is never a record.
+    func isRecord(now: Date) -> Bool {
+        guard !history.isEmpty else { return false }
+        let markers = history + [lastDone]
+        var longestPrior: TimeInterval = 0
+        for i in 1..<markers.count {
+            longestPrior = max(longestPrior, markers[i].timeIntervalSince(markers[i - 1]))
+        }
+        return now.timeIntervalSince(lastDone) > longestPrior
+    }
 }
 
 // Writing goes through Storage.serialize, which omits empty optionals the
